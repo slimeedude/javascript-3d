@@ -49,14 +49,22 @@ function hexToRgba(h) {
   return [0, 0, 0, 0];
 }
 
+//--- Drawing ---//
+function setPixel(x, y, hexColor) {
+  if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
+  const idx = (y * WIDTH + x) * 4;
+  const [r, g, b, a] = hexToRgba(hexColor);
+  data[idx] = r;
+  data[idx + 1] = g;
+  data[idx + 2] = b;
+  data[idx + 3] = a;
+}
+
+//--- idk ---//
 function renderLoop() {
 
   // Tests
-  const [r, g, b, a] = hexToRgba("#FF0000FF");
-  data[1028] = r;
-  data[1029] = g;
-  data[1030] = b;
-  data[1031] = a;
+  setPixel(1, 1, "#FF0000FF")
 
   update();
 
