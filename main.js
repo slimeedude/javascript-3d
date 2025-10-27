@@ -50,6 +50,16 @@ function hexToRgba(h) {
 }
 
 //--- Drawing ---//
+function clear(hexColor = '#00000000') {
+  const [r,g,b,a] = hexToRgba(hexColor);
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = r;
+    data[i+1] = g;
+    data[i+2] = b;
+    data[i+3] = a;
+  }
+}
+
 function setPixel(x, y, hexColor) {
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
   const idx = (y * WIDTH + x) * 4;
