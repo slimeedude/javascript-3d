@@ -48,3 +48,19 @@ function hexToRgba(h) {
   }
   return [0, 0, 0, 0];
 }
+
+function renderLoop() {
+
+  // Tests
+  const [r, g, b, a] = hexToRgba("#FF0000FF");
+  data[1028] = r;
+  data[1029] = g;
+  data[1030] = b;
+  data[1031] = a;
+
+  update();
+
+  requestAnimationFrame(renderLoop);
+}
+
+renderLoop();
