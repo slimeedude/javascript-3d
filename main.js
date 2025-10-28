@@ -133,7 +133,8 @@ function drawText(startX, startY, text, color = "#FFFFFF", font = defaultFont, s
 
 // Convert 3D to 2D coordinates
 function project(point, width, height, focalLength = 100) {
-  let scale = focalLength / (point.z);
+  if (point.z <= 0) return null; // One end is behind the "near plane". The drawn line is bugged so it's better not to draw it entirely
+  let scale = focalLength / (point.z || 1);
   return {
     x: point.x * scale + width / 2,
     y: -point.y * scale + height / 2, // It's upside-down
@@ -172,8 +173,8 @@ class Object3D {
         drawLine(
           Math.round(proj1.x), Math.round(proj1.y),
           Math.round(proj2.x), Math.round(proj2.y),
-          color
-        );
+          color // Rounded, because a non-integer number causes it to freeze
+        );      // It's also a pixel display, so there's no reason to use float type
       }
     });
   }
