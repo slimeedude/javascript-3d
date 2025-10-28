@@ -200,13 +200,24 @@ const camera = new Camera({ x: 0, y: 0, z: 0 }, 100);
 const cube = new Object3D(shapes.cube.points, shapes.cube.edges, { x: -1.5, y: 0.25, z: 4 });
 const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, { x: 1.5, y: -0.25, z: 5 });
 
+let fps = 0;
+let frames = 0;
+let frameNow = performance.now();
+
 function renderLoop() {
   clear();
+
+  frames++;
+  if (performance.now() - frameNow >= 1000) {
+    frameNow = performance.now();
+    fps = frames;
+    frames = 0;
+  }
 
   // Tests
   cube.draw(camera, "#FFFF00FF");
   pyramid.draw(camera, "#00FF00FF");
-  drawText(1, 1, "Hello", "#FF0000");
+  drawText(1, 1, `FPS: ${fps}`, "#FF0000FF", defaultFont);
 
   update();
 
