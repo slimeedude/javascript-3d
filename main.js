@@ -194,18 +194,28 @@ class Camera {
 }
 
 class Object3D {
-  constructor(points, edges, position = { x: 0, y: 0, z: 0 }) {
+  constructor(points, edges, position = { x: 0, y: 0, z: 0 }, rotation = { x: 0, y: 0, z: 0 }, pivot = { x: 0, y: 0, z: 0 }) {
     this.points = points;
     this.edges = edges;
     this.position = position;
+    this.rotation = rotation;
+    this.pivot = pivot;
   }
 
-  getTransformedPoints() { // @TODO: rotation transformation
+  getTransformedPoints() {
     return this.points.map(p => {
+      let shifted = {
+        x: p.x - this.pivot.x, // Shift by pivot
+        y: p.y - this.pivot.y,
+        z: p.z - this.pivot.z
+      };
+      shifted = rotateX(shifted, this.rotation.x); // Rotate first
+      shifted = rotateZ(shifted, this.rotation.z);
+      shifted = rotateY(shifted, this.rotation.y);
       return {
-        x: p.x + this.position.x,
-        y: p.y + this.position.y,
-        z: p.z + this.position.z
+        x: shifted.x + this.pivot.x + this.position.x,
+        y: shifted.y + this.pivot.y + this.position.y,
+        z: shifted.z + this.pivot.z + this.position.z
       };
     });
   }
@@ -245,9 +255,10 @@ class Object3D {
 }
 
 //--- idk ---//
-const camera = new Camera({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, 100);
-const cube = new Object3D(shapes.cube.points, shapes.cube.edges, { x: -1.5, y: 0.25, z: 4 });
-const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, { x: 1.5, y: -0.25, z: 5 });
+const camera = new Camera({ x: -1.5, y: 3, z: -5 }, { x: -0.45, y: 0.35, z: 0 }, 100);
+const cube = new Object3D(shapes.cube.points, shapes.cube.edges, { x: -2, y: 1, z: 0 });
+const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, { x: 2, y: 1, z: 0 });
+const plane = new Object3D(shapes.plane.points, shapes.plane.edges, { x: 0, y: 0, z: 0 });
 
 let fps = 0;
 let frames = 0;
@@ -264,8 +275,9 @@ function renderLoop() {
   }
 
   // Tests
-  cube.draw(camera, "#FFFF00FF");
+  plane.draw(camera, "#0000FFFF");
   pyramid.draw(camera, "#00FF00FF");
+  cube.draw(camera, "#FFFF00FF");
   drawText(1, 1, `FPS: ${fps}`, "#FF0000FF", defaultFont);
 
   update();
