@@ -70,11 +70,50 @@ function setPixel(x, y, hexColor) {
   data[idx + 3] = a;
 }
 
+//--- Text rendering ---// Font data in a separate script
+function drawChar(x, y, char, color = "#FFFFFF", font = defaultFont) {
+  let charFont;
+  if (font.chars[char]) {
+    if (font.chars[char].width * font.height == font.chars[char].data.length) {
+      charFont = font.chars[char];
+    } else {
+      charFont = font.unknown_char;
+    }
+  } else {
+    charFont = font.unknown_char;
+  }
+
+  for (let i = 0; i < charFont.data.length; i++) {
+    if (charFont.data[i] == "1") {
+      setPixel(x + i % charFont.width, y + Math.floor(i / charFont.width), color);
+    }
+  }
+}
+
+function drawText(startX, startY, text, color = "#FFFFFF", font = defaultFont, spacing = 1) {
+  let x = startX;
+  for (const char of text) {
+    if (char == '\n') {
+      startY += font.height + 1;
+      x = startX;
+      continue;
+    }
+    let width;
+    if (font.chars[char]) {
+      width = font.chars[char].width;
+    } else {
+      width = font.unknown_char.width;
+    }
+    drawChar(x, startY, char, color, font);
+    x += width + spacing;
+  }
+}
+
 //--- idk ---//
 function renderLoop() {
 
   // Tests
-  setPixel(1, 1, "#FF0000FF")
+  drawText(1, 1, "Hello", "#FFFF00");
 
   update();
 
