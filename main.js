@@ -171,8 +171,9 @@ function rotateZ(point, angle) {
 }
 
 class Camera {
-  constructor(position = { x: 0, y: 0, z: 0 }, focalLength = 100) {
+  constructor(position = { x: 0, y: 0, z: 0 }, rotation = { x: 0, y: 0, z: 0 }, focalLength = 100) {
     this.position = position;
+    this.rotation = rotation;
     this.focalLength = focalLength; // Distance between the camera and the near plane
   }
 
@@ -182,6 +183,12 @@ class Camera {
       y: point.y - this.position.y,
       z: point.z - this.position.z
     };
+
+    // I had to use ZYX order, the camera was turning weird for some reason
+    p = rotateZ(p, this.rotation.z);
+    p = rotateY(p, this.rotation.y);
+    p = rotateX(p, this.rotation.x);
+
     return p;
   }
 }
@@ -238,7 +245,7 @@ class Object3D {
 }
 
 //--- idk ---//
-const camera = new Camera({ x: 0, y: 0, z: 0 }, 100);
+const camera = new Camera({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, 100);
 const cube = new Object3D(shapes.cube.points, shapes.cube.edges, { x: -1.5, y: 0.25, z: 4 });
 const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, { x: 1.5, y: -0.25, z: 5 });
 
