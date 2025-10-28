@@ -102,9 +102,10 @@ function drawChar(x, y, char, color = "#FFFFFF", font = defaultFont) {
     charFont = font.unknown_char;
   }
 
-  for (let i = 0; i < charFont.data.length; i++) {
-    if (charFont.data[i] == "1") {
-      setPixel(x + i % charFont.width, y + Math.floor(i / charFont.width), color);
+  for (let dy = 0; dy < font.height; dy++) {
+    for (let dx = 0; dx < charFont.width; dx++) {
+      if (charFont.data[dy * charFont.width + dx] == "1")
+        setPixel(x + dx, y + dy, color);
     }
   }
 }
