@@ -71,7 +71,7 @@ function setPixel(x, y, hexColor) {
 }
 
 // Bresenham's line algorithm
-function drawLine(x1, y1, x2, y2, color = "#FFFF00FF") {
+function drawLine(x1, y1, x2, y2, color = "#FFFFFFFF") {
   let dx = Math.abs(x2 - x1);
   let dy = Math.abs(y2 - y1);
   let sx = (x1 < x2) ? 1 : -1;
@@ -133,7 +133,7 @@ function drawText(startX, startY, text, color = "#FFFFFF", font = defaultFont, s
 
 // Convert 3D to 2D coordinates
 function project(point, width, height, focalLength = 100) {
-  if (point.z <= 0) return null; // One end is behind the "near plane". The drawn line is bugged so it's better not to draw it entirely
+  if (point.z <= 0) return null; // One end is behind the "near plane". The drawn line looks bugged so it's better not to draw it entirely
   let scale = focalLength / (point.z || 1);
   return {
     x: point.x * scale + width / 2,
@@ -141,12 +141,27 @@ function project(point, width, height, focalLength = 100) {
   };
 }
 
+class Camera {
+  constructor(position = { x: 0, y: 0, z: 0 }, focalLength = 100) {
+    this.position = position;
+    this.focalLength = focalLength; // Distance between the camera and the near plane
+  }
+
+  worldToCamera(point) {
+    let p = {
+      x: point.x - this.position.x,
+      y: point.y - this.position.y,
+      z: point.z - this.position.z
+    };
+    return p;
+  }
+}
+
 class Object3D {
-  constructor(points, edges, position = { x: 0, y: 0, z: 0 }, focalLength = 100) {
+  constructor(points, edges, position = { x: 0, y: 0, z: 0 }) {
     this.points = points;
     this.edges = edges;
     this.position = position;
-    this.focalLength = focalLength;
   }
 
   getTransformedPoints() { // @TODO: rotation transformation
@@ -159,15 +174,15 @@ class Object3D {
     });
   }
 
-  draw(color) {
+  draw(camera, color = "#FFFFFFFF") {
     const transformed = this.getTransformedPoints();
 
     this.edges.forEach(edge => {
-      let p1 = transformed[edge[0]];
-      let p2 = transformed[edge[1]];
+      let p1 = camera.worldToCamera(transformed[edge[0]]);
+      let p2 = camera.worldToCamera(transformed[edge[1]]);
 
-      const proj1 = project(p1, WIDTH, HEIGHT, this.focalLength);
-      const proj2 = project(p2, WIDTH, HEIGHT, this.focalLength);
+      const proj1 = project(p1, WIDTH, HEIGHT, camera.focalLength);
+      const proj2 = project(p2, WIDTH, HEIGHT, camera.focalLength);
 
       if (proj1 && proj2) {
         drawLine(
@@ -181,6 +196,7 @@ class Object3D {
 }
 
 //--- idk ---//
+const camera = new Camera({ x: 0, y: 0, z: 0 }, 100);
 const cube = new Object3D(shapes.cube.points, shapes.cube.edges, { x: -1.5, y: 0.25, z: 4 });
 const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, { x: 1.5, y: -0.25, z: 5 });
 
@@ -188,8 +204,8 @@ function renderLoop() {
   clear();
 
   // Tests
-  cube.draw("#FFFF00FF");
-  pyramid.draw("#00FF00FF");
+  cube.draw(camera, "#FFFF00FF");
+  pyramid.draw(camera, "#00FF00FF");
   drawText(1, 1, "Hello", "#FF0000");
 
   update();

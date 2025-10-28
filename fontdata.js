@@ -7,7 +7,7 @@ const defaultFont = {
   },
   chars: {
     " ": {
-      width: 1,
+      width: 1, // I could skip drawing spaces entirely and add to x by width
       data: "0000000",
     },
     "0": {
