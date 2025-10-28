@@ -140,6 +140,16 @@ function project(point, width, height, focalLength = 100) {
   };
 }
 
+function rotateZ(point, angle) {
+  let cos = Math.cos(angle);
+  let sin = Math.sin(angle);
+  return {
+    x: point.x * cos - point.y * sin,
+    y: point.x * sin + point.y * cos,
+    z: point.z
+  }; // Rotate around Z. Moves X and Y
+}
+
 class Camera {
   constructor(position = { x: 0, y: 0, z: 0 }, focalLength = 100) {
     this.position = position;
@@ -212,6 +222,11 @@ const camera = new Camera({ x: 0, y: 0, z: 0 }, 100);
 const cube = new Object3D(shapes.cube.points, shapes.cube.edges, { x: -1.5, y: 0.25, z: 4 });
 const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, { x: 1.5, y: -0.25, z: 5 });
 
+// Temporary tests
+const testPoint = { x: 0, y: 1, z: 5 };
+let angle = 0;
+// Temporary tests
+
 let fps = 0;
 let frames = 0;
 let frameNow = performance.now();
@@ -230,6 +245,12 @@ function renderLoop() {
   cube.draw(camera, "#FFFF00FF");
   pyramid.draw(camera, "#00FF00FF");
   drawText(1, 1, `FPS: ${fps}`, "#FF0000FF", defaultFont);
+
+  // Temporary tests
+  angle += 0.01
+  const ptp = project(rotateZ(testPoint, angle), WIDTH, HEIGHT);
+  setPixel(Math.round(ptp.x), Math.round(ptp.y), "#FF0000FF");
+  // Temporary tests
 
   update();
 
