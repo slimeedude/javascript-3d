@@ -133,7 +133,6 @@ function drawText(startX, startY, text, color = "#FFFFFF", font = defaultFont, s
 
 // Convert 3D to 2D coordinates
 function project(point, width, height, focalLength = 100) {
-  if (point.z <= 0) return null; // One end is behind the "near plane". The drawn line looks bugged so it's better not to draw it entirely
   let scale = focalLength / (point.z || 1);
   return {
     x: point.x * scale + width / 2,
@@ -181,16 +180,29 @@ class Object3D {
       let p1 = camera.worldToCamera(transformed[edge[0]]);
       let p2 = camera.worldToCamera(transformed[edge[1]]);
 
+      const nearZ = 0.1;
+      if (p1.z <= nearZ && p2.z <= nearZ) return;
+
+      if (p1.z < nearZ || p2.z < nearZ) {
+        const t = (nearZ - p1.z) / (p2.z - p1.z);
+        const clipped = {
+          x: p1.x + t * (p2.x - p1.x),
+          y: p1.y + t * (p2.y - p1.y),
+          z: nearZ
+        };
+
+        if (p1.z < nearZ) p1 = clipped;
+        else p2 = clipped;
+      }
+
       const proj1 = project(p1, WIDTH, HEIGHT, camera.focalLength);
       const proj2 = project(p2, WIDTH, HEIGHT, camera.focalLength);
 
-      if (proj1 && proj2) {
-        drawLine(
-          Math.round(proj1.x), Math.round(proj1.y),
-          Math.round(proj2.x), Math.round(proj2.y),
-          color // Rounded, because a non-integer number causes it to freeze
-        );      // It's also a pixel display, so there's no reason to use float type
-      }
+      drawLine(
+        Math.round(proj1.x), Math.round(proj1.y),
+        Math.round(proj2.x), Math.round(proj2.y),
+        color // Rounded, because a non-integer number causes it to freeze
+      );      // It's also a pixel display, so there's no reason to use float type
     });
   }
 }
