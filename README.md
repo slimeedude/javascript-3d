@@ -1,6 +1,6 @@
 # javascript-3d
 
-A 3D renderer written in JavaScript that runs on your browser (for now)
+A 3D renderer written in JavaScript that runs on your browser
 
 ---
 
@@ -12,8 +12,12 @@ Here are some images of how this looks:
 ---
 
 ## How to use/try
+Simple, visit this link:
+https://slimeedude.github.io/javascript-3d/
 
-To use this, you just need to download this project's zip file and open the HTML file.
+Or alternatively:
+
+Download this project as ZIP, extract it somewhere, then open the HTML file.
 
 Most mobile browsers don't support opening local files anymore, so there's a chance you might have to host this on a test HTTP server.
 

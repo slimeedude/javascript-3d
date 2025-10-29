@@ -238,7 +238,7 @@ class Object3D {
 
   getTransformedPoints() {
     return this.points.map(p => {
-      // Shapes don't use Point3D (yet) so I create a new point
+      // Shapes don't use Point3D (yet) so I create a new point to use .add
       let shifted = new Point3D(p.x, p.y, p.z).add(this.pivot);
       shifted = rotateX(shifted, this.rotation.x); // Rotate first
       shifted = rotateZ(shifted, this.rotation.z);
