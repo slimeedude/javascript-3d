@@ -130,59 +130,93 @@ function drawText(startX, startY, text, color = "#FFFFFF", font = defaultFont, s
 }
 
 //--- Projection ---//
+class Point2D {
+  constructor(x = 0, y = 0) {
+    this.x = x;
+    this.y = y;
+  }
+
+  clone() {
+    return new Point2D(this.x, this.y);
+  }
+}
+
+class Point3D {
+  constructor(x = 0, y = 0, z = 0) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  clone() {
+    return new Point3D(this.x, this.y, this.z)
+  }
+
+  add(point) {
+    return new Point3D(
+      this.x + point.x,
+      this.y + point.y,
+      this.z + point.z
+    );
+  }
+
+  subtract(point) {
+    return new Point3D(
+      this.x - point.x,
+      this.y - point.y,
+      this.z - point.z
+    );
+  }
+}
 
 // Convert 3D to 2D coordinates
 function project(point, width, height, focalLength = 100) {
   let scale = focalLength / (point.z || 1);
-  return {
-    x: point.x * scale + width / 2,
-    y: -point.y * scale + height / 2, // It's upside-down
-  };
+  return new Point2D(
+    point.x * scale + width / 2,
+    -point.y * scale + height / 2, // It's upside-down
+  );
 }
 
 function rotateX(point, angle) {
   let cos = Math.cos(angle);
   let sin = Math.sin(angle);
-  return {
-    x: point.x,
-    y: point.y * cos - point.z * sin,
-    z: point.y * sin + point.z * cos
-  }; // Rotate around X. Moves Y and Z
+  return new Point3D(
+    point.x,
+    point.y * cos - point.z * sin,
+    point.y * sin + point.z * cos
+  ); // Rotate around X. Moves Y and Z
 }
 
 function rotateY(point, angle) {
   let cos = Math.cos(angle);
   let sin = Math.sin(angle);
-  return {
-    x: point.x * cos - point.z * sin,
-    y: point.y,
-    z: point.x * sin + point.z * cos
-  }; // Rotate around Y. Moves X and Z
+  return new Point3D(
+    point.x * cos - point.z * sin,
+    point.y,
+    point.x * sin + point.z * cos
+  ); // Rotate around Y. Moves X and Z
 }
 
 function rotateZ(point, angle) {
   let cos = Math.cos(angle);
   let sin = Math.sin(angle);
-  return {
-    x: point.x * cos - point.y * sin,
-    y: point.x * sin + point.y * cos,
-    z: point.z
-  }; // Rotate around Z. Moves X and Y
+  return new Point3D(
+    point.x * cos - point.y * sin,
+    point.x * sin + point.y * cos,
+    point.z
+  ); // Rotate around Z. Moves X and Y
 }
 
 class Camera {
-  constructor(position = { x: 0, y: 0, z: 0 }, rotation = { x: 0, y: 0, z: 0 }, focalLength = 100) {
+  constructor(position = new Point3D (0, 0, 0), rotation = { x: 0, y: 0, z: 0 }, focalLength = 100) {
     this.position = position;
     this.rotation = rotation;
     this.focalLength = focalLength; // Distance between the camera and the near plane
   }
 
   worldToCamera(point) {
-    let p = {
-      x: point.x - this.position.x,
-      y: point.y - this.position.y,
-      z: point.z - this.position.z
-    };
+    let p = point.subtract(this.position);
 
     // I had to use ZYX order, the camera was turning weird for some reason
     p = rotateZ(p, this.rotation.z);
@@ -194,7 +228,7 @@ class Camera {
 }
 
 class Object3D {
-  constructor(points, edges, position = { x: 0, y: 0, z: 0 }, rotation = { x: 0, y: 0, z: 0 }, pivot = { x: 0, y: 0, z: 0 }) {
+  constructor(points, edges, position = new Point3D(0, 0, 0), rotation = { x: 0, y: 0, z: 0 }, pivot = new Point3D(0, 0, 0)) {
     this.points = points;
     this.edges = edges;
     this.position = position;
@@ -204,19 +238,12 @@ class Object3D {
 
   getTransformedPoints() {
     return this.points.map(p => {
-      let shifted = {
-        x: p.x - this.pivot.x, // Shift by pivot
-        y: p.y - this.pivot.y,
-        z: p.z - this.pivot.z
-      };
+      // Shapes don't use Point3D (yet) so I create a new point
+      let shifted = new Point3D(p.x, p.y, p.z).add(this.pivot);
       shifted = rotateX(shifted, this.rotation.x); // Rotate first
       shifted = rotateZ(shifted, this.rotation.z);
       shifted = rotateY(shifted, this.rotation.y);
-      return {
-        x: shifted.x + this.pivot.x + this.position.x,
-        y: shifted.y + this.pivot.y + this.position.y,
-        z: shifted.z + this.pivot.z + this.position.z
-      };
+      return shifted.subtract(this.pivot).add(this.position);
     });
   }
 
@@ -232,11 +259,11 @@ class Object3D {
 
       if (p1.z < nearZ || p2.z < nearZ) {
         const t = (nearZ - p1.z) / (p2.z - p1.z);
-        const clipped = {
-          x: p1.x + t * (p2.x - p1.x),
-          y: p1.y + t * (p2.y - p1.y),
-          z: nearZ
-        };
+        const clipped = new Point3D(
+          p1.x + t * (p2.x - p1.x),
+          p1.y + t * (p2.y - p1.y),
+          nearZ
+        );
 
         if (p1.z < nearZ) p1 = clipped;
         else p2 = clipped;
@@ -255,10 +282,10 @@ class Object3D {
 }
 
 //--- idk ---//
-const camera = new Camera({ x: -1.5, y: 3, z: -5 }, { x: -0.45, y: 0.35, z: 0 }, 100);
-const cube = new Object3D(shapes.cube.points, shapes.cube.edges, { x: -2, y: 1, z: 0 });
-const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, { x: 2, y: 1, z: 0 });
-const plane = new Object3D(shapes.plane.points, shapes.plane.edges, { x: 0, y: 0, z: 0 });
+const camera = new Camera(new Point3D(-1.5, 3, -5), { x: -0.45, y: 0.35, z: 0 }, 100);
+const cube = new Object3D(shapes.cube.points, shapes.cube.edges, new Point3D(-2, 1, 0));
+const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, new Point3D(2, 1, 0));
+const plane = new Object3D(shapes.plane.points, shapes.plane.edges, new Point3D(0, 0, 0));
 
 let fps = 0;
 let frames = 0;
