@@ -1,8 +1,8 @@
 //--- idk ---//
 const camera = new Camera(new Point3D(-1.5, 3, -5), { x: -0.45, y: 0.35, z: 0 }, 100);
-const cube = new Object3D(shapes.cube.points, shapes.cube.edges, new Point3D(-2, 1, 0));
-const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, new Point3D(2, 1, 0));
-const plane = new Object3D(shapes.plane.points, shapes.plane.edges, new Point3D(0, 0, 0));
+const cube = new Object3D(shapes.cube, new Point3D(-2, 1, 0));
+const pyramid = new Object3D(shapes.pyramid, new Point3D(2, 1, 0));
+const plane = new Object3D(shapes.plane, new Point3D(0, 0, 0));
 
 let now = performance.now();
 
@@ -30,9 +30,9 @@ function renderLoop() {
   cube.rotation.y += 1 * delta;
   cube.rotation.z += 0.5 * delta;
 
-  plane.draw(camera, "#0000FFFF");
-  pyramid.draw(camera, "#00FF00FF");
-  cube.draw(camera, "#FFFF00FF");
+  plane.outline(camera, "#0000FFFF");
+  pyramid.outline(camera, "#00FF00FF");
+  cube.outline(camera, "#FFFF00FF");
   drawText(1, 1, `FPS: ${fps}`, "#FF0000FF", defaultFont);
 
   update();
