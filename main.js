@@ -1,291 +1,10 @@
-//--- Canvas ---//
-const WIDTH = 256, HEIGHT = 128;
-const canvas = document.getElementById('pixels');
-const ctx = canvas.getContext('2d', { alpha: true });
-
-const imageData = ctx.createImageData(WIDTH, HEIGHT);
-const data = imageData.data; // Uint8ClampedArray, length = WIDTH*HEIGHT*4
-
-function update() {
-  ctx.putImageData(imageData, 0, 0);
-}
-
-//--- Color handling ---//
-function hexToRgba(h) {
-  if (!h) return [0, 0, 0, 0];
-  h = h.replace('#', '');
-  if (h.length === 3) {
-    return [
-      parseInt(h[0] + h[0], 16),
-      parseInt(h[1] + h[1], 16),
-      parseInt(h[2] + h[2], 16),
-      255
-    ];
-  }
-  if (h.length === 4) {
-    return [
-      parseInt(h[0] + h[0], 16),
-      parseInt(h[1] + h[1], 16),
-      parseInt(h[2] + h[2], 16),
-      parseInt(h[3] + h[3], 16)
-    ];
-  }
-  if (h.length === 6) {
-    return [
-      parseInt(h.slice(0, 2), 16),
-      parseInt(h.slice(2, 4), 16),
-      parseInt(h.slice(4, 6), 16),
-      255
-    ];
-  }
-  if (h.length === 8) {
-    return [
-      parseInt(h.slice(0, 2), 16),
-      parseInt(h.slice(2, 4), 16),
-      parseInt(h.slice(4, 6), 16),
-      parseInt(h.slice(6, 8), 16)
-    ];
-  }
-  return [0, 0, 0, 0];
-}
-
-//--- Drawing ---//
-function clear(hexColor = '#00000000') {
-  const [r, g, b, a] = hexToRgba(hexColor);
-  for (let i = 0; i < data.length; i += 4) {
-    data[i] = r;
-    data[i + 1] = g;
-    data[i + 2] = b;
-    data[i + 3] = a;
-  }
-}
-
-function setPixel(x, y, hexColor) {
-  if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
-  const idx = (y * WIDTH + x) * 4;
-  const [r, g, b, a] = hexToRgba(hexColor);
-  data[idx] = r;
-  data[idx + 1] = g;
-  data[idx + 2] = b;
-  data[idx + 3] = a;
-}
-
-// Bresenham's line algorithm
-function drawLine(x1, y1, x2, y2, color = "#FFFFFFFF") {
-  let dx = Math.abs(x2 - x1);
-  let dy = Math.abs(y2 - y1);
-  let sx = (x1 < x2) ? 1 : -1;
-  let sy = (y1 < y2) ? 1 : -1;
-  let err = dx - dy;
-
-  while (true) {
-    setPixel(x1, y1, color);
-
-    if (x1 === x2 && y1 === y2) break;
-
-    let e2 = 2 * err;
-    if (e2 > -dy) { err -= dy; x1 += sx; }
-    if (e2 < dx) { err += dx; y1 += sy; }
-  }
-}
-
-//--- Text rendering ---// Font data in a separate script
-function drawChar(x, y, char, color = "#FFFFFF", font = defaultFont) {
-  let charFont;
-  if (font.chars[char]) {
-    if (font.chars[char].width * font.height == font.chars[char].data.length) {
-      charFont = font.chars[char];
-    } else {
-      charFont = font.unknown_char;
-    }
-  } else {
-    charFont = font.unknown_char;
-  }
-
-  for (let dy = 0; dy < font.height; dy++) {
-    for (let dx = 0; dx < charFont.width; dx++) {
-      if (charFont.data[dy * charFont.width + dx] == "1")
-        setPixel(x + dx, y + dy, color);
-    }
-  }
-}
-
-function drawText(startX, startY, text, color = "#FFFFFF", font = defaultFont, spacing = 1) {
-  let x = startX;
-  for (const char of text) {
-    if (char == '\n') {
-      startY += font.height + 1;
-      x = startX;
-      continue;
-    }
-    let width;
-    if (font.chars[char]) {
-      width = font.chars[char].width;
-    } else {
-      width = font.unknown_char.width;
-    }
-    drawChar(x, startY, char, color, font);
-    x += width + spacing;
-  }
-}
-
-//--- Projection ---//
-class Point2D {
-  constructor(x = 0, y = 0) {
-    this.x = x;
-    this.y = y;
-  }
-
-  clone() {
-    return new Point2D(this.x, this.y);
-  }
-}
-
-class Point3D {
-  constructor(x = 0, y = 0, z = 0) {
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  }
-
-  clone() {
-    return new Point3D(this.x, this.y, this.z)
-  }
-
-  add(point) {
-    return new Point3D(
-      this.x + point.x,
-      this.y + point.y,
-      this.z + point.z
-    );
-  }
-
-  subtract(point) {
-    return new Point3D(
-      this.x - point.x,
-      this.y - point.y,
-      this.z - point.z
-    );
-  }
-}
-
-// Convert 3D to 2D coordinates
-function project(point, width, height, focalLength = 100) {
-  let scale = focalLength / (point.z || 1);
-  return new Point2D(
-    point.x * scale + width / 2,
-    -point.y * scale + height / 2, // It's upside-down
-  );
-}
-
-function rotateX(point, angle) {
-  let cos = Math.cos(angle);
-  let sin = Math.sin(angle);
-  return new Point3D(
-    point.x,
-    point.y * cos - point.z * sin,
-    point.y * sin + point.z * cos
-  ); // Rotate around X. Moves Y and Z
-}
-
-function rotateY(point, angle) {
-  let cos = Math.cos(angle);
-  let sin = Math.sin(angle);
-  return new Point3D(
-    point.x * cos - point.z * sin,
-    point.y,
-    point.x * sin + point.z * cos
-  ); // Rotate around Y. Moves X and Z
-}
-
-function rotateZ(point, angle) {
-  let cos = Math.cos(angle);
-  let sin = Math.sin(angle);
-  return new Point3D(
-    point.x * cos - point.y * sin,
-    point.x * sin + point.y * cos,
-    point.z
-  ); // Rotate around Z. Moves X and Y
-}
-
-class Camera {
-  constructor(position = new Point3D (0, 0, 0), rotation = { x: 0, y: 0, z: 0 }, focalLength = 100) {
-    this.position = position;
-    this.rotation = rotation;
-    this.focalLength = focalLength; // Distance between the camera and the near plane
-  }
-
-  worldToCamera(point) {
-    let p = point.subtract(this.position);
-
-    // I had to use ZYX order, the camera was turning weird for some reason
-    p = rotateZ(p, this.rotation.z);
-    p = rotateY(p, this.rotation.y);
-    p = rotateX(p, this.rotation.x);
-
-    return p;
-  }
-}
-
-class Object3D {
-  constructor(points, edges, position = new Point3D(0, 0, 0), rotation = { x: 0, y: 0, z: 0 }, pivot = new Point3D(0, 0, 0)) {
-    this.points = points;
-    this.edges = edges;
-    this.position = position;
-    this.rotation = rotation;
-    this.pivot = pivot;
-  }
-
-  getTransformedPoints() {
-    return this.points.map(p => {
-      // Shapes don't use Point3D (yet) so I create a new point to use .add
-      let shifted = new Point3D(p.x, p.y, p.z).add(this.pivot);
-      shifted = rotateX(shifted, this.rotation.x); // Rotate first
-      shifted = rotateZ(shifted, this.rotation.z);
-      shifted = rotateY(shifted, this.rotation.y);
-      return shifted.subtract(this.pivot).add(this.position);
-    });
-  }
-
-  draw(camera, color = "#FFFFFFFF") {
-    const transformed = this.getTransformedPoints();
-
-    this.edges.forEach(edge => {
-      let p1 = camera.worldToCamera(transformed[edge[0]]);
-      let p2 = camera.worldToCamera(transformed[edge[1]]);
-
-      const nearZ = 0.1;
-      if (p1.z <= nearZ && p2.z <= nearZ) return;
-
-      if (p1.z < nearZ || p2.z < nearZ) {
-        const t = (nearZ - p1.z) / (p2.z - p1.z);
-        const clipped = new Point3D(
-          p1.x + t * (p2.x - p1.x),
-          p1.y + t * (p2.y - p1.y),
-          nearZ
-        );
-
-        if (p1.z < nearZ) p1 = clipped;
-        else p2 = clipped;
-      }
-
-      const proj1 = project(p1, WIDTH, HEIGHT, camera.focalLength);
-      const proj2 = project(p2, WIDTH, HEIGHT, camera.focalLength);
-
-      drawLine(
-        Math.round(proj1.x), Math.round(proj1.y),
-        Math.round(proj2.x), Math.round(proj2.y),
-        color // Rounded, because a non-integer number causes it to freeze
-      );      // It's also a pixel display, so there's no reason to use float type
-    });
-  }
-}
-
 //--- idk ---//
 const camera = new Camera(new Point3D(-1.5, 3, -5), { x: -0.45, y: 0.35, z: 0 }, 100);
 const cube = new Object3D(shapes.cube.points, shapes.cube.edges, new Point3D(-2, 1, 0));
 const pyramid = new Object3D(shapes.pyramid.points, shapes.pyramid.edges, new Point3D(2, 1, 0));
 const plane = new Object3D(shapes.plane.points, shapes.plane.edges, new Point3D(0, 0, 0));
+
+let now = performance.now();
 
 let fps = 0;
 let frames = 0;
@@ -293,6 +12,9 @@ let frameNow = performance.now();
 
 function renderLoop() {
   clear();
+
+  let delta = (performance.now() - now) / 1000;
+  now = performance.now();
 
   frames++;
   if (performance.now() - frameNow >= 1000) {
@@ -302,6 +24,12 @@ function renderLoop() {
   }
 
   // Tests
+
+  pyramid.rotation.y += 1 * delta;
+  cube.rotation.x += 0.2 * delta;
+  cube.rotation.y += 1 * delta;
+  cube.rotation.z += 0.5 * delta;
+
   plane.draw(camera, "#0000FFFF");
   pyramid.draw(camera, "#00FF00FF");
   cube.draw(camera, "#FFFF00FF");
