@@ -6,14 +6,29 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
 
   <style>
-     body { font-family: sans-serif; padding:6px; background:#333; color:#eee; }
-    .canvas-wrap { position:relative; width:1024px; height:512px;}
-    .pixels {
-      width:100%; height:100%;
-      image-rendering: pixelated; /* Gets blurry without this */
+     html, body {
+      margin: 0;
+      width: 100%; height: 100%;
+      background: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      aspect-ratio: 2 / 1;
+      width: min(98vw, 98vh * 2);
+      height: min(98vh, 98vw / 2);
       background: #111;
-      border-radius:8px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+      border: 4px solid black;
+      box-sizing: border-box;
+    }
+
+    .pixels {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
     }
   </style>
 </head>
@@ -32,5 +47,7 @@
   <script src="./lib/math3d.js"></script>
   <script src="./lib/shapes.js"></script>
   <script src="./lib/scene.js"></script>
+  <script src="./lib/input.js"></script>
+  <script src="./lib/controls.js"></script>
   <script src="./main.js"></script>
 </html>
