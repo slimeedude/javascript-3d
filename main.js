@@ -4,23 +4,17 @@ const cube = new Object3D(shapes.cube, new Point3D(-2, 1, 0));
 const pyramid = new Object3D(shapes.pyramid, new Point3D(2, 1, 0));
 const plane = new Object3D(shapes.plane, new Point3D(0, 0, 0));
 
-let now = performance.now();
-
-let fps = 0;
-let frames = 0;
-let frameNow = performance.now();
-
 function renderLoop() {
   clear("#111");
 
   let delta = (performance.now() - now) / 1000;
   now = performance.now();
 
-  frames++;
-  if (performance.now() - frameNow >= 1000) {
-    frameNow = performance.now();
-    fps = frames;
-    frames = 0;
+  frame.count++;
+  if (performance.now() - frame.now >= 1000) {
+    frame.now = performance.now();
+    frame.perSec = frame.count;
+    frame.count = 0;
   }
 
   moveCamera(camera, delta);
@@ -33,7 +27,16 @@ function renderLoop() {
   plane.outline(camera, "#0000FFFF");
   pyramid.outline(camera, "#00FF00FF");
   cube.outline(camera, "#FFFF00FF");
-  drawText(1, 120, `FPS: ${fps}`, "#FF0000FF", defaultFont);
+  drawText(1, 1, `FPS: ${frame.perSec}`, "#F00", fonts.defaultFont);
+
+  if (icon) drawIcon(iconpack2.icon1, 160, 32, true);
+
+  if (pointer.updated) {
+    updateUi();
+    pointer.updated = false;
+  }
+  drawUi(delta);
+
   drawIcon(pointer.icon, pointer.getX(), pointer.getY());
 
   update();
