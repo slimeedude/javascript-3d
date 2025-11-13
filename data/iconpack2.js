@@ -1,5 +1,5 @@
 const iconpack2 = {
-  "icon1": {
+  "icon1": { // Art by slimeedude
     "width": 96,
     "height": 96,
     "colors": [

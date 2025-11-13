@@ -14,6 +14,7 @@ Here are some images of how this looks:
 ## How to use/try
 Simple, visit this link:
 https://slimeedude.github.io/javascript-3d/
+(main branch only)
 
 Or alternatively:
 
