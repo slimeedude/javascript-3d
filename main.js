@@ -11,7 +11,7 @@ let frames = 0;
 let frameNow = performance.now();
 
 function renderLoop() {
-  clear();
+  clear("#111");
 
   let delta = (performance.now() - now) / 1000;
   now = performance.now();
