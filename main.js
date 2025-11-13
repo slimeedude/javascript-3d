@@ -23,7 +23,6 @@ function renderLoop() {
     frames = 0;
   }
 
-  // Tests
   moveCamera(camera, delta);
 
   pyramid.rotation.y += 1 * delta;
@@ -35,6 +34,7 @@ function renderLoop() {
   pyramid.outline(camera, "#00FF00FF");
   cube.outline(camera, "#FFFF00FF");
   drawText(1, 120, `FPS: ${fps}`, "#FF0000FF", defaultFont);
+  drawIcon(pointer.icon, pointer.getX(), pointer.getY());
 
   update();
 
